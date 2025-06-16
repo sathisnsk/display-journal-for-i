@@ -1,0 +1,11 @@
+    @types/vscode": "^1.99.1" //required so that vscode can be imported into our project
+
+@types/node - required so that console.log can be used in our project
+
+
+
+tsconfig.js
+
+lib: ES2022 is required so that 'iterable' being used in @types/vscode works 
+    "esModuleInterop": true, is required so that 'streams' module being imported in node-ssh module works
+

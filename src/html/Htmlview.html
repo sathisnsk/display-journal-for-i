@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journal Viewer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+
+    body {
+
+
+      background-color: var(--vscode-editor-background);
+      margin: 0;
+      padding: 1rem;
+    color: var(--vscode-editor-foreground);
+    font-family: var(--vscode-font-family);
+    font-weight: var(--vscode-font-weight);
+    font-size: var(--vscode-font-size);
+
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+    }
+
+input {
+  background-color: var(--vscode-settings-textInputBackground);
+    border: 0px;
+    box-sizing: border-box;
+    color: var(--vscode-settings-textInputForeground);
+    display: block;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    font-weight: var(--vscode-font-weight);
+    line-height: 18px;
+    outline: none;
+    padding: 3px 4px;
+}
+
+input:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+/* Separate cleanly */
+button {
+  display: inline-block;
+  margin: 0.5rem 0;
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+      border-color: var(--vscode-button-border, var(--vscode-button-background));
+    border-style: solid;
+    border-radius: 2px;
+    border-width: 1px;
+  padding: 0.4rem 1rem;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+      font-weight: var(--vscode-font-weight);
+line-height: 22px;
+    overflow: hidden;
+    padding: 1px 13px;
+    user-select: none;
+    white-space: nowrap;
+
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+button:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+button:disabled {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  opacity: 0.6;
+  cursor: default;
+}
+
+label {
+    color: var(--vscode-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    font-weight: 600;
+    line-height: 1.23077;
+    cursor: default;
+    display: block;
+    padding: 5px 0px;
+
+}
+    #query-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    #error-message {
+      color: red;
+      margin-bottom: 0.5rem;
+    }
+
+    .container {
+      max-height: 400px;
+    /*  overflow-x: auto;  horizontal scrolling */
+    /*  overflow-y: auto;  vertical scrolling */
+      max-width: 100%;
+    }
+
+    table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: var(--vscode-editorWidget-background);
+      color: var(--vscode-editorWidget-foreground);
+    }
+
+    th, td {
+      border: 1px solid var(--vscode-editorWidget-border);
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      text-transform: uppercase;
+      font-size: 0.9em;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    tr:nth-child(even) {
+      background-color: var(--vscode-editor-inactiveSelectionBackground);
+    }
+
+    tr:hover {
+      background-color: var(--vscode-editor-hoverHighlightBackground);
+    }
+
+    td:empty::after {
+      content: "—";
+      color: var(--vscode-disabledForeground);
+    }
+
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 11;
+      background-color: var(--vscode-editorWidget-background);
+    }
+
+    .sticky-row {
+      background-color: var(--vscode-editorWidget-background);
+      position: sticky;
+      top: 0;
+    }
+
+    .highlight {
+      background-color: var(--vscode-editor-selectionBackground) !important;
+    }
+  </style>
+</head>
+<body>
+  <form id="query-form">
+    <input type="text" name="file-name" placeholder="File Name" required="true" maxlength="10" />
+    <input type="text" name="library-name" placeholder="Library Name"  required="true" maxlength="10" />
+    <label>Start:</label>
+    <input type="date" name="start-date" />
+    <input type="number" placeholder="HHMMSS" name="start-time" required="true"  />
+    <label>End:</label>
+    <input type="date" name="end-date" />
+    <input type="number" placeholder="HHMMSS" name="end-time" required="true"  />
+    <input type="text" name="journal-from" placeholder="Journal Receiver From" required="true" maxlength="10" />
+    <input type="text" name="journal-to" placeholder="Journal Receiver To" required="true" maxlength="10" />
+   
+    <button type="submit" id="run-query-btn">Run Query</button>
+  </form>
+
+  <div id="error-message"></div>
+
+  <div>
+    <button id="export-excel" style="margin-top: 0.5rem;">Export to Excel</button>
+  </div>
+
+  <div class="container">
+    <h2>Journal Data</h2>
+    <table id="journalTable">
+     <thead id="table-head">
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    <button type="button" id="prev-page">Previous</button>
+    <span id="pagination">Page 1</span>
+    <button type="button" id="next-page">Next</button>
+  </div>
+
+   <!-- <script src="${webview.asWebviewUri(scriptUri)}"></script> -->
+   <script src="${scriptUri}"></script>
+</body>
+</html>
+
+
+  

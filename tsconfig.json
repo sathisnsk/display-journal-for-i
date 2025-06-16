@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "lib": ["ES2022", "DOM"],
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "rootDir": "src",
+        "outDir": "out"
+
+    },
+    "exclude": [
+        "node_modules"
+    ],
+
+}
